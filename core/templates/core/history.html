@@ -1,0 +1,36 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<header class="mb-12">
+    <h1 class="text-5xl font-[800] text-slate-900 tracking-tight">Data <span class="text-green-600">Vault.</span></h1>
+    <p class="text-slate-500 mt-2 font-medium">Review and manage your complete historical records.</p>
+</header>
+
+<div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden">
+    <table class="w-full text-left">
+        <thead class="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-widest">
+            <tr>
+                <th class="px-8 py-5 border-b border-slate-100">Activity Type</th>
+                <th class="px-8 py-5 border-b border-slate-100">Magnitude</th>
+                <th class="px-8 py-5 border-b border-slate-100 text-right">CO2 Impact</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+            {% for entry in entries %}
+            <tr class="hover:bg-slate-50/50 transition duration-200">
+                <td class="px-8 py-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+                            <i class="fa-solid fa-{{ entry.category.icon_code|default:'leaf' }}"></i>
+                        </div>
+                        <span class="font-bold text-slate-900">{{ entry.category.name }}</span>
+                    </div>
+                </td>
+                <td class="px-8 py-6 text-slate-600 font-medium">{{ entry.value }} {{ entry.category.unit }}</td>
+                <td class="px-8 py-6 text-right font-black text-red-500">+{{ entry.co2_total|floatformat:2 }}kg</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

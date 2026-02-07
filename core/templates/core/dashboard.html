@@ -1,0 +1,130 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-[1200px] mx-auto">
+    <header class="mb-12 flex justify-between items-start">
+        <div class="space-y-1">
+            <h1 class="text-5xl font-black text-slate-900 tracking-tighter">
+                Eco<span class="text-green-600 italic">Pulse</span> <span class="text-slate-300 font-light">Engine</span>
+            </h1>
+            <div class="flex items-center gap-2 text-slate-500 font-semibold text-sm">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                LIVE TELEMETRY: {{ user.username|upper }} // NODE_01
+            </div>
+        </div>
+        <div class="flex flex-col items-end">
+            <span class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Current Epoch</span>
+            <span class="text-slate-900 font-mono font-bold">{% now "H:i:s" %}</span>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-12 gap-6 mb-8">
+        <div class="col-span-12 lg:col-span-7 fresh-card p-1 relative overflow-hidden group transition-all duration-500 hover:shadow-2xl">
+            <div class="bg-white rounded-[1.9rem] p-8 h-full flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Net Carbon Aggregate</span>
+                    <i class="fa-solid fa-chart-line text-slate-200 text-2xl"></i>
+                </div>
+                <div class="mt-8 flex items-baseline gap-4">
+                    <span class="text-7xl font-[900] text-slate-900 tracking-tighter">{{ metrics.total|floatformat:4 }}</span>
+                    <span class="text-2xl text-slate-300 font-black uppercase">kg CO2e</span>
+                </div>
+                <div class="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between text-xs font-bold">
+                    <span class="text-green-600 bg-green-50 px-3 py-1 rounded-full">OPTIMIZED FLOW</span>
+                    <span class="text-slate-400 font-mono">ID: 0x{{ user.id|default:"A1" }}FF92</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-5 fresh-card p-1 bg-gradient-to-br from-green-500 to-emerald-700">
+            <div class="bg-white/95 backdrop-blur-sm rounded-[1.9rem] p-8 h-full flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-green-700">Bio-Recovery Debt</span>
+                    <div class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-200">
+                        <i class="fa-solid fa-tree"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-7xl font-[900] text-green-600 tracking-tighter">{{ metrics.trees|floatformat:1 }}</span>
+                    <p class="text-slate-500 text-sm font-medium mt-2 leading-tight">Total tree count required to neutralize current atmospheric delta.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-12 lg:col-span-4 fresh-card p-8 bg-white flex flex-col">
+            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8">Emission Distribution</h3>
+            <div class="relative flex-1 min-h-[220px]">
+                <canvas id="freshChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-8 fresh-card overflow-hidden bg-white">
+            <div class="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                <h3 class="font-black text-slate-900 text-sm uppercase tracking-widest">Entry History Log</h3>
+                <span class="text-[10px] text-slate-400 font-mono">TOTAL_RECORDS: {{ entries|length }}</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-50">
+                        <tr>
+                            <th class="px-8 py-4">Source_ID</th>
+                            <th class="px-8 py-4">Quantity_Val</th>
+                            <th class="px-8 py-4">Delta_Impact</th>
+                            <th class="px-8 py-4 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 text-sm font-semibold">
+                        {% for entry in entries %}
+                        <tr class="group hover:bg-slate-50 transition-colors">
+                            <td class="px-8 py-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    <span class="text-slate-900">{{ entry.category.name|upper }}</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-4 text-slate-500">{{ entry.value }} {{ entry.category.unit }}</td>
+                            <td class="px-8 py-4 text-red-500 font-bold">+{{ entry.co2_total|floatformat:4 }}</td>
+                            <td class="px-8 py-4 text-right">
+                                <span class="text-[10px] py-1 px-2 bg-slate-100 rounded text-slate-400 uppercase tracking-tighter">Verified</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('freshChart').getContext('2d');
+        
+        // Backend Data Injection
+        const carbonTotal = parseFloat("{{ metrics.total|default:0 }}") || 1;
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Current Output', 'Atmospheric Target'],
+                datasets: [{
+                    data: [carbonTotal, 10], // Static '10' for visual goal comparison
+                    backgroundColor: ['#16a34a', '#f1f5f9'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                cutout: '88%',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { animateRotate: true, duration: 2000 }
+            }
+        });
+    });
+</script>
+{% endblock %}
