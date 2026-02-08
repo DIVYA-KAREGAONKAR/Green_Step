@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="w-full max-w-md bg-white border-4 border-slate-900 p-10 rounded-[2.5rem] shadow-2xl">
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white mx-auto shadow-lg mb-4">
+                <i class="fa-solid fa-user-plus text-2xl text-green-500"></i>
+            </div>
+            <h1 class="text-3xl font-black text-slate-900">Join GreenStep.</h1>
+            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">Initialize New User Node</p>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">{{ field.label }}</label>
+                <div class="relative">
+                    {{ field }}
+                </div>
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <p class="text-red-500 text-[10px] font-bold uppercase italic mt-1">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+                {% if field.help_text %}
+                    <p class="text-[9px] text-slate-400 leading-tight">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-green-600 transition-all shadow-xl tracking-widest uppercase">
+                Create Account
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-slate-50 text-center">
+            <p class="text-xs font-bold text-slate-400">
+                Already have a node? <a href="{% url 'login' %}" class="text-green-600 underline">Login Here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Force Django default form inputs to look like our "Senior" UI */
+    input {
+        width: 100%;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    input:focus { border-color: #16a34a; }
+</style>
+{% endblock %}

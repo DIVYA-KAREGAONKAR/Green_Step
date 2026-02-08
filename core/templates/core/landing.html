@@ -1,0 +1,21 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="min-h-[70vh] flex flex-col items-center justify-center text-center">
+    <h1 class="text-7xl font-black text-slate-900 tracking-tighter mb-6">
+        Track your <span class="text-green-600">Footprint.</span>
+    </h1>
+    <p class="text-xl text-slate-500 font-medium max-w-2xl mb-12">
+        A high-precision environmental ledger designed to monitor, analyze, and neutralize your daily carbon output.
+    </p>
+
+    <div class="flex items-center gap-6">
+        <a href="{% url 'login' %}" class="px-8 py-4 font-bold text-slate-900 hover:text-green-600 transition text-lg">
+            Login
+        </a>
+        <a href="{% url 'register' %}" class="px-10 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-green-600 transition shadow-2xl shadow-green-200 text-lg tracking-widest">
+            GET STARTED
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -3,6 +3,14 @@ from django.shortcuts import redirect, render
 from .models import CarbonEntry, Category
 from .services.carbon_logic import calculate_metrics
 from django.contrib.auth.decorators import login_required
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum
+from .models import CarbonEntry
+from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+
 
 @login_required
 def dashboard(request):
@@ -26,10 +34,37 @@ def dashboard(request):
     }
     return render(request, 'core/dashboard.html', context)
 
-from django.db.models.functions import TruncMonth
-from django.db.models import Sum
-from .models import CarbonEntry
-from django.shortcuts import render
+
+def register_view(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = UserCreationForm()
+    return render(request, 'core/register.html', {'form': form})
+
+def login_view(request):
+    if request.method == "POST":
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)  # This creates the session!
+            # Use 'next' if it exists, otherwise go to dashboard
+            next_url = request.GET.get('next', 'dashboard')
+            return redirect(next_url)
+        else:
+            # Print errors to terminal to see why it's failing
+            print(form.errors) 
+    else:
+        form = AuthenticationForm()
+    return render(request, 'core/login.html', {'form': form})
+
+
+
+
 
 def monthly_trends(request):
     # Aggregate data
