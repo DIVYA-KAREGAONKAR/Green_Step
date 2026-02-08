@@ -1,0 +1,111 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <header class="mb-12">
+        <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Monthly <span class="text-green-600">Trends.</span></h1>
+        <p class="text-slate-500 font-bold mt-1">Historical velocity for {{ user.username }}</p>
+    </header>
+
+    <div class="grid grid-cols-12 gap-8">
+        <div class="col-span-12 bg-white border-2 border-slate-100 p-8 rounded-[2.5rem] shadow-xl">
+            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Emission Trajectory</h3>
+            <div class="h-[400px]">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-4 bg-white border-2 border-slate-100 p-8 rounded-[2.5rem] shadow-lg flex flex-col items-center">
+            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8 w-full">Intensity Split</h3>
+            <div class="relative w-full h-[250px]">
+                <canvas id="distributionCircle"></canvas>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-8 bg-white border-2 border-slate-100 rounded-[2.5rem] overflow-hidden shadow-lg">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    <tr>
+                        <th class="px-10 py-5">Period</th>
+                        <th class="px-10 py-5 text-right">Net Impact</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for data in monthly_data %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-10 py-6 font-bold text-slate-900">{{ data.month|date:"F Y" }}</td>
+                        <td class="px-10 py-6 text-right font-black text-slate-600">{{ data.total_co2|floatformat:2 }} kg</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" class="p-20 text-center text-slate-300 font-bold">Awaiting telemetry synchronization...</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{ labels|json_script:"chart-labels" }}
+{{ values|json_script:"chart-values" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const labels = JSON.parse(document.getElementById('chart-labels').textContent);
+        const values = JSON.parse(document.getElementById('chart-values').textContent);
+
+        // If no data, show a message instead of an empty box
+        if (labels.length === 0) {
+            console.log("No trend data found");
+            return;
+        }
+
+        // 1. Line Chart
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#16a34a'
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Doughnut Chart (Intensity Split)
+        new Chart(document.getElementById('distributionCircle'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Current Output', 'Atmospheric Headroom'],
+                datasets: [{
+                    data: [values[values.length - 1], 100], // Last month vs a goal of 100
+                    backgroundColor: ['#16a34a', '#f1f5f9'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '80%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+    });
+</script>
+{% endblock %}

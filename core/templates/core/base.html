@@ -2,29 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenStep | Environmental Ledger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-  /* High-Contrast Visibility Fixes */
-body { background-color: #f1f5f9; color: #0f172a; } /* Slate-900 for text */
-.pro-card { border: 2px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-label { color: #475569 !important; font-weight: 800 !important; } /* Darker labels */
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9; 
+            color: #0f172a; 
+        }
+        
+        .fresh-card { 
+            background: white;
+            border: 2px solid #e2e8f0; 
+            border-radius: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); 
+        }
+
+        .nav-link { 
+            color: #64748b !important; /* Muted slate for inactive icons */
+            font-size: 1.5rem;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover { color: #16a34a !important; transform: scale(1.1); }
+        
+        /* Highlight for the active page icon */
+        .nav-link.active { color: #0f172a !important; }
     </style>
 </head>
 <body class="flex flex-col lg:flex-row min-h-screen">
-    <nav class="w-full lg:w-24 border-r border-slate-200 bg-white flex lg:flex-col items-center py-8 gap-10">
-        <div class="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
-            <i class="fa-solid fa-leaf text-xl"></i>
-        </div>
-        <div class="flex lg:flex-col gap-10 text-slate-400">
-            <a href="{% url 'dashboard' %}" class="hover:text-green-500 transition"><i class="fa-solid fa-grid-2 text-2xl"></i></a>
-            <a href="{% url 'log_activity' %}" class="hover:text-green-500 transition"><i class="fa-solid fa-circle-plus text-2xl"></i></a>
-            <a href="{% url 'history' %}" class="hover:text-green-500 transition"><i class="fa-solid fa-clock-rotate-left text-2xl"></i></a>
-        </div>
-    </nav>
-    <main class="flex-1 p-8 lg:p-14">
-        {% block content %}{% endblock %}
-    </main>
+   <nav class="w-full lg:w-24 border-r border-slate-200 bg-white flex lg:flex-col items-center py-8 gap-10">
+    <div class="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-200">
+        <i class="fa-solid fa-leaf text-xl"></i>
+    </div>
+    
+    <div class="flex lg:flex-col gap-10 mt-10">
+        <a href="{% url 'dashboard' %}" class="nav-link" title="Dashboard"><i class="fa-solid fa-house"></i></a>
+        
+        <a href="{% url 'log_activity' %}" class="nav-link" title="Log Activity"><i class="fa-solid fa-plus-circle"></i></a>
+        
+        <a href="{% url 'trends' %}" class="nav-link" title="Analytics"><i class="fa-solid fa-chart-line text-green-600"></i></a>
+        
+        <a href="{% url 'history' %}" class="nav-link" title="History"><i class="fa-solid fa-clock-rotate-left"></i></a>
+    </div>
+</nav>
+
+<main class="flex-1 p-8 lg:p-14">
+    {% block content %}{% endblock %}
+</main>
 </body>
 </html>

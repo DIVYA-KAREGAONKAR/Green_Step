@@ -2,19 +2,16 @@
 
 {% block content %}
 <div class="max-w-[1200px] mx-auto">
-    <header class="mb-12 flex justify-between items-start">
-        <div class="space-y-1">
-            <h1 class="text-5xl font-black text-slate-900 tracking-tighter">
-                Eco<span class="text-green-600 italic">Pulse</span> <span class="text-slate-300 font-light">Engine</span>
+    <header class="mb-12 flex justify-between items-end">
+        <div>
+            <h1 class="text-4xl font-[800] text-slate-900 tracking-tighter">
+                Green<span class="text-green-600">Step.</span>
             </h1>
-            <div class="flex items-center gap-2 text-slate-500 font-semibold text-sm">
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                LIVE TELEMETRY: {{ user.username|upper }} // NODE_01
-            </div>
+            <p class="text-slate-500 font-bold mt-1">Environmental pulse for {{ user.username }}</p>
         </div>
-        <div class="flex flex-col items-end">
-            <span class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Current Epoch</span>
-            <span class="text-slate-900 font-mono font-bold">{% now "H:i:s" %}</span>
+        <div class="text-right hidden sm:block">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Current Epoch</span>
+            <p class="text-slate-900 font-mono font-bold">{% now "H:i:s" %}</p>
         </div>
     </header>
 
@@ -23,15 +20,15 @@
             <div class="bg-white rounded-[1.9rem] p-8 h-full flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Net Carbon Aggregate</span>
-                    <i class="fa-solid fa-chart-line text-slate-200 text-2xl"></i>
+                    <i class="fa-solid fa-microchip text-slate-100 text-3xl"></i>
                 </div>
                 <div class="mt-8 flex items-baseline gap-4">
                     <span class="text-7xl font-[900] text-slate-900 tracking-tighter">{{ metrics.total|floatformat:4 }}</span>
                     <span class="text-2xl text-slate-300 font-black uppercase">kg CO2e</span>
                 </div>
                 <div class="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between text-xs font-bold">
-                    <span class="text-green-600 bg-green-50 px-3 py-1 rounded-full">OPTIMIZED FLOW</span>
-                    <span class="text-slate-400 font-mono">ID: 0x{{ user.id|default:"A1" }}FF92</span>
+                    <span class="text-green-600 bg-green-50 px-3 py-1 rounded-full uppercase">Optimized Flow</span>
+                    <span class="text-slate-400 font-mono">NODE_ID: {{ user.id|default:"1" }}</span>
                 </div>
             </div>
         </div>
@@ -39,14 +36,14 @@
         <div class="col-span-12 lg:col-span-5 fresh-card p-1 bg-gradient-to-br from-green-500 to-emerald-700">
             <div class="bg-white/95 backdrop-blur-sm rounded-[1.9rem] p-8 h-full flex flex-col justify-between">
                 <div class="flex justify-between items-start">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-green-700">Bio-Recovery Debt</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-green-700">Bio-Recovery Goal</span>
                     <div class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-200">
                         <i class="fa-solid fa-tree"></i>
                     </div>
                 </div>
                 <div class="mt-4">
                     <span class="text-7xl font-[900] text-green-600 tracking-tighter">{{ metrics.trees|floatformat:1 }}</span>
-                    <p class="text-slate-500 text-sm font-medium mt-2 leading-tight">Total tree count required to neutralize current atmospheric delta.</p>
+                    <p class="text-slate-500 text-sm font-medium mt-2 leading-tight">Monthly tree count required for neutralization.</p>
                 </div>
             </div>
         </div>
@@ -54,42 +51,42 @@
 
     <div class="grid grid-cols-12 gap-6">
         <div class="col-span-12 lg:col-span-4 fresh-card p-8 bg-white flex flex-col">
-            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8">Emission Distribution</h3>
-            <div class="relative flex-1 min-h-[220px]">
+            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8">Intensity Split</h3>
+            <div class="relative flex-1 min-h-[250px]">
                 <canvas id="freshChart"></canvas>
             </div>
+            <a href="{% url 'trends' %}" class="mt-6 block text-center py-3 border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:border-green-500 hover:text-green-600 transition">
+                Explore Monthly Trends →
+            </a>
         </div>
 
-        <div class="col-span-12 lg:col-span-8 fresh-card overflow-hidden bg-white">
+        <div class="col-span-12 lg:col-span-8 fresh-card overflow-hidden bg-white shadow-sm">
             <div class="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-                <h3 class="font-black text-slate-900 text-sm uppercase tracking-widest">Entry History Log</h3>
+                <h3 class="font-black text-slate-900 text-sm uppercase tracking-widest">Historical Telemetry</h3>
                 <span class="text-[10px] text-slate-400 font-mono">TOTAL_RECORDS: {{ entries|length }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-50">
                         <tr>
-                            <th class="px-8 py-4">Source_ID</th>
-                            <th class="px-8 py-4">Quantity_Val</th>
-                            <th class="px-8 py-4">Delta_Impact</th>
-                            <th class="px-8 py-4 text-right">Status</th>
+                            <th class="px-8 py-4">Vertical</th>
+                            <th class="px-8 py-4">Quantity</th>
+                            <th class="px-8 py-4">Impact</th>
+                            <th class="px-8 py-4 text-right">Auth</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 text-sm font-semibold">
                         {% for entry in entries %}
                         <tr class="group hover:bg-slate-50 transition-colors">
-                            <td class="px-8 py-4">
-                                <div class="flex items-center gap-3">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                                    <span class="text-slate-900">{{ entry.category.name|upper }}</span>
-                                </div>
-                            </td>
+                            <td class="px-8 py-4 font-bold text-slate-900">{{ entry.category.name|upper }}</td>
                             <td class="px-8 py-4 text-slate-500">{{ entry.value }} {{ entry.category.unit }}</td>
-                            <td class="px-8 py-4 text-red-500 font-bold">+{{ entry.co2_total|floatformat:4 }}</td>
+                            <td class="px-8 py-4 text-red-500 font-black">+{{ entry.co2_total|floatformat:4 }}</td>
                             <td class="px-8 py-4 text-right">
-                                <span class="text-[10px] py-1 px-2 bg-slate-100 rounded text-slate-400 uppercase tracking-tighter">Verified</span>
+                                <span class="text-[9px] font-black px-2 py-1 bg-slate-100 text-slate-400 rounded">SSL_SIGNED</span>
                             </td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="p-20 text-center text-slate-300 font-bold uppercase tracking-widest">Awaiting Initial Data Stream...</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -98,28 +95,43 @@
     </div>
 </div>
 
+{{ circle_labels|json_script:"circle-labels" }}
+{{ circle_values|json_script:"circle-values" }}
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        const labels = JSON.parse(document.getElementById('circle-labels').textContent);
+        const values = JSON.parse(document.getElementById('circle-values').textContent);
         const ctx = document.getElementById('freshChart').getContext('2d');
-        
-        // Backend Data Injection
-        const carbonTotal = parseFloat("{{ metrics.total|default:0 }}") || 1;
-        
+
+        // Fallback: If no data, show a neutral ring
+        if (labels.length === 0) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending'],
+                    datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth: 0 }]
+                },
+                options: { cutout: '85%', plugins: { legend: { display: false } } }
+            });
+            return;
+        }
+
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Current Output', 'Atmospheric Target'],
+                labels: labels,
                 datasets: [{
-                    data: [carbonTotal, 10], // Static '10' for visual goal comparison
-                    backgroundColor: ['#16a34a', '#f1f5f9'],
+                    data: values,
+                    backgroundColor: ['#16a34a', '#0f172a', '#64748b', '#94a3b8', '#cbd5e1'],
                     borderWidth: 0,
                     hoverOffset: 15
                 }]
             },
             options: {
                 plugins: { legend: { display: false } },
-                cutout: '88%',
+                cutout: '82%',
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: { animateRotate: true, duration: 2000 }
