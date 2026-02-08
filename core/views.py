@@ -1,4 +1,7 @@
 
+import datetime
+import datetime
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from .models import CarbonEntry, Category
 from .services.carbon_logic import calculate_metrics
@@ -10,42 +13,84 @@ from django.shortcuts import render
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-
+from django.db.models import Sum
+from .forms import ExtendedRegisterForm
+from .utils import render_to_pdf # Import our helper
 
 @login_required
+def export_pdf(request):
+    user_entries = CarbonEntry.objects.filter(user=request.user).order_by('-created_at')
+    total = user_entries.aggregate(Sum('co2_total'))['co2_total__sum'] or 0
+    
+    context = {
+        'user': request.user,
+        'entries': user_entries,
+        'total': total,
+        'dept': request.user.profile.get_department_display(),
+        'date': datetime.datetime.now(),
+    }
+    
+    pdf = render_to_pdf('core/audit_report.html', context)
+    if pdf:
+        response = HttpResponse(pdf, content_type='application/pdf')
+        filename = f"Audit_Report_{request.user.username}.pdf"
+        content = f"attachment; filename='{filename}'"
+        response['Content-Disposition'] = content
+        return response
+    return HttpResponse("Error generating PDF", status=400)
+@login_required
 def dashboard(request):
-    # Fetch entries for the current user
-    entries = CarbonEntry.objects.filter(user=request.user).order_by('-created_at')
+    # 1. DATA ISOLATION: Get only this user's entries
+    user_entries = CarbonEntry.objects.filter(user=request.user).order_by('-created_at')
+    user_total = user_entries.aggregate(Sum('co2_total'))['co2_total__sum'] or 0
     
-    # Logic to get breakdown by category for the Intensity Split circle
-    breakdown = entries.values('category__name').annotate(total=Sum('co2_total'))
-    
+    # 2. TELEMETRY: Category Breakdown for the "Infrastructure Split" Chart
+    breakdown = user_entries.values('category__name').annotate(total=Sum('co2_total'))
     circle_labels = [item['category__name'] for item in breakdown]
     circle_values = [float(item['total']) for item in breakdown]
 
+    # 3. ENTERPRISE CONTEXT: Compare User vs Department
+    dept_code = request.user.profile.department
+    dept_name = request.user.profile.get_department_display()
+    
+    # Sum total impact of everyone in the same department
+    dept_total = CarbonEntry.objects.filter(
+        user__profile__department=dept_code
+    ).aggregate(Sum('co2_total'))['co2_total__sum'] or 0
+
+    # Calculate Personal Share safely (Avoid division by zero)
+    personal_share = 0
+    if dept_total > 0:
+        personal_share = (user_total / dept_total) * 100
+
     context = {
-        'entries': entries[:5], # Show last 5 logs
         'metrics': {
-            'total': entries.aggregate(Sum('co2_total'))['co2_total__sum'] or 0,
-            'trees': (entries.aggregate(Sum('co2_total'))['co2_total__sum'] or 0) / 21,
+            'total': user_total,
+            'trees': user_total / 21,
+            'dept_name': dept_name,
+            'dept_total': dept_total,
+            'dept_code': dept_code,
+            'personal_share': personal_share, # Logic moved from template to here
         },
+        'entries': user_entries[:10],
         'circle_labels': circle_labels,
         'circle_values': circle_values,
     }
     return render(request, 'core/dashboard.html', context)
-
-
 def register_view(request):
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = ExtendedRegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
+            # Save the department to the profile
+            user.profile.department = form.cleaned_data.get('department')
+            user.profile.save()
+            
             login(request, user)
             return redirect('dashboard')
     else:
-        form = UserCreationForm()
+        form = ExtendedRegisterForm()
     return render(request, 'core/register.html', {'form': form})
-
 def login_view(request):
     if request.method == "POST":
         form = AuthenticationForm(data=request.POST)

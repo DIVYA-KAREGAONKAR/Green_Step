@@ -12,4 +12,5 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('export-pdf/', views.export_pdf, name='export_pdf'),
 ]
