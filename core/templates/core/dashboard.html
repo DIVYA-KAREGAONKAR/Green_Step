@@ -120,22 +120,24 @@
     </div>
 </div>
 
-{{ circle_labels|json_script:"circle-labels" }}
-{{ circle_values|json_script:"circle-values" }}
+{{ circle_labels|json_script:"labels-data" }}
+{{ circle_values|json_script:"values-data" }}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const labels = JSON.parse(document.getElementById('circle-labels').textContent);
-        const values = JSON.parse(document.getElementById('circle-values').textContent);
-        const ctx = document.getElementById('freshChart').getContext('2d');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse the data from the secure script tags above
+        const labelsData = JSON.parse(document.getElementById('labels-data').textContent);
+        const valuesData = JSON.parse(document.getElementById('values-data').textContent);
 
+        const ctx = document.getElementById('freshChart').getContext('2d');
+        
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: labels,
+                labels: labelsData,
                 datasets: [{
-                    data: values,
+                    data: valuesData,
                     backgroundColor: ['#16a34a', '#0f172a', '#64748b', '#94a3b8', '#cbd5e1'],
                     borderWidth: 0,
                     hoverOffset: 15
@@ -147,7 +149,7 @@
                 responsive: true,
                 maintainAspectRatio: false
             }
-        });
+        }); 
     });
 </script>
 {% endblock %}

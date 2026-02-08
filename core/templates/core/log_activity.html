@@ -1,105 +1,91 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto">
-    <header class="mb-12">
-        <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Universal <span class="text-green-600">Entry.</span></h1>
-        <p class="text-slate-600 font-bold mt-2 italic underline decoration-green-500/30">Node: {{ user.username }} // Manual Factor Override Enabled</p>
-    </header>
+<div class="max-w-xl mx-auto py-10">
+    <div class="bg-[#1a2c38] text-white p-10 rounded-3xl shadow-2xl border border-slate-700">
+        <h2 class="text-3xl font-bold text-center text-[#4ade80] mb-8">Daily Impact Log</h2>
 
-    <form method="POST" class="grid grid-cols-12 gap-10">
-        {% csrf_token %}
-        
-        <div class="col-span-12 lg:col-span-5 space-y-4">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Select or Define Vertical</h3>
-            
-            {% for category in categories %}
-            <label class="block relative group cursor-pointer">
-                <input type="radio" name="category_mode" value="preset" class="peer hidden" checked
-                       onclick="toggleManual(false, '{{ category.name }}', '{{ category.unit }}', '{{ category.co2_per_unit }}', '{{ category.id }}')">
-                <div class="w-full bg-white border-2 border-slate-200 p-6 rounded-3xl peer-checked:border-green-500 peer-checked:shadow-xl transition-all flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
-                        <i class="fa-solid fa-{{ category.icon_code }}"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900">{{ category.name }}</p>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ category.unit }} based</p>
-                    </div>
-                </div>
-            </label>
-            {% endfor %}
+        <form method="POST" class="space-y-8">
+            {% csrf_token %}
 
-            <label class="block relative group cursor-pointer mt-8">
-                <input type="radio" name="category_mode" value="manual" class="peer hidden" onclick="toggleManual(true)">
-                <div class="w-full bg-slate-900 border-2 border-transparent p-6 rounded-3xl peer-checked:border-green-500 shadow-xl transition-all flex items-center gap-4 text-white">
-                    <div class="w-10 h-10 rounded-xl bg-green-500 text-black flex items-center justify-center">
-                        <i class="fa-solid fa-plus"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold">Manual Override</p>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Define New Factor</p>
-                    </div>
-                </div>
-            </label>
-        </div>
-
-        <div class="col-span-12 lg:col-span-7">
-            <div class="bg-white rounded-[2.5rem] p-10 shadow-2xl border-4 border-slate-900 sticky top-10 space-y-8">
-                
-                <div id="manual-fields" class="hidden space-y-6 pb-6 border-b-2 border-slate-50">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400">Resource Name</label>
-                            <input type="text" name="custom_name" id="custom_name" placeholder="Bike, AC, Beef..."
-                                   class="w-full border-2 border-slate-200 p-4 rounded-xl font-bold text-slate-900 focus:border-green-500 outline-none">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400">Unit Label</label>
-                            <input type="text" name="custom_unit" id="custom_unit" placeholder="gm, km, kg..."
-                                   class="w-full border-2 border-slate-200 p-4 rounded-xl font-bold text-slate-900 focus:border-green-500 outline-none">
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase text-green-600">CO2 Factor (kg CO2e per unit)</label>
-                        <input type="number" name="custom_factor" id="custom_factor" step="0.0001" placeholder="0.21"
-                               class="w-full bg-green-50 border-2 border-green-200 p-4 rounded-xl font-bold text-slate-900 focus:border-green-500 outline-none text-xl">
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex justify-between items-end">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Activity Magnitude</label>
-                        <span id="unit-pill" class="text-[10px] font-black bg-slate-900 text-white px-3 py-1 rounded-full uppercase tracking-widest">Select Vertical</span>
-                    </div>
-                    <input type="number" name="value" step="0.01" required placeholder="0.00"
-                           class="w-full bg-slate-50 border-4 border-slate-100 rounded-3xl p-10 text-7xl font-black text-slate-900 focus:border-green-500 focus:bg-white outline-none transition-all shadow-inner">
-                </div>
-
-                <input type="hidden" name="category_id" id="preset-id">
-
-                <button type="submit" class="w-full bg-slate-900 text-white font-black py-6 rounded-2xl hover:bg-green-600 transition-all shadow-xl tracking-widest uppercase">
-                    Commit Telemetry to Ledger
-                </button>
+            <div>
+                <label class="block text-sm text-slate-400 mb-2">Employee Profile</label>
+                <select class="w-full bg-[#111e26] border border-slate-600 p-3 rounded-lg text-white">
+                    <option>{{ request.user.username }}</option>
+                </select>
             </div>
-        </div>
-    </form>
+
+            <div class="space-y-4">
+                <h3 class="text-[#4ade80] font-semibold tracking-wide">Commute Telemetry</h3>
+                
+                <div class="flex justify-between items-center bg-[#111e26] p-4 rounded-xl">
+                    <span class="text-sm">Commuting from Home?</span>
+                    <input type="checkbox" class="toggle-checkbox w-10 h-5 bg-slate-600 rounded-full appearance-none checked:bg-[#4ade80] transition cursor-pointer">
+                </div>
+
+                <div class="grid grid-cols-4 gap-4 text-center">
+                    <div id="metro-card" class="mode-card p-4 rounded-xl border border-slate-600 cursor-pointer hover:border-[#4ade80] transition-all" 
+                         onclick="setMode('METRO', 'metro-card')">
+                        <i class="fa-solid fa-train text-xl mb-2"></i>
+                        <p class="text-[10px] font-bold uppercase">Metro</p>
+                    </div>
+
+                    <div id="ev-card" class="mode-card p-4 rounded-xl border border-slate-600 cursor-pointer hover:border-[#4ade80] transition-all" 
+                         onclick="setMode('EV', 'ev-card')">
+                        <i class="fa-solid fa-bolt text-xl mb-2"></i>
+                        <p class="text-[10px] font-bold uppercase">EV</p>
+                    </div>
+
+                    <div id="auto-card" class="mode-card p-4 rounded-xl border border-slate-600 cursor-pointer hover:border-[#4ade80] transition-all" 
+                         onclick="setMode('AUTO', 'auto-card')">
+                        <i class="fa-solid fa-truck text-xl mb-2"></i>
+                        <p class="text-[10px] font-bold uppercase">Auto</p>
+                    </div>
+
+                    <div id="car-card" class="mode-card p-4 rounded-xl border-2 border-[#4ade80] bg-[#111e26] text-[#4ade80] cursor-pointer" 
+                         onclick="setMode('CAR', 'car-card')">
+                        <i class="fa-solid fa-car text-xl mb-2"></i>
+                        <p class="text-[10px] font-bold uppercase">Car</p>
+                    </div>
+                </div>
+
+                <input type="hidden" name="commute_mode" id="selected_mode" value="CAR">
+                <input type="number" name="commute_dist" step="any" placeholder="Enter distance (km)" class="w-full bg-[#111e26] border border-slate-600 p-3 rounded-lg text-white">
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-2">Hours Worked</label>
+                    <input type="number" name="hours_worked" value="8" step="0.5" class="w-full bg-[#111e26] border border-slate-600 p-3 rounded-lg text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-2">vCPU Hours</label>
+                    <input type="number" name="vcpu_hours" value="0" step="0.1" class="w-full bg-[#111e26] border border-slate-600 p-3 rounded-lg text-white font-bold">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-[#0fa958] hover:bg-[#12cc6a] text-white font-bold py-4 rounded-xl transition-all uppercase tracking-widest">
+                Log Activity
+            </button>
+        </form>
+    </div>
 </div>
 
 <script>
-    function toggleManual(isManual, name, unit, factor, id) {
-        const manualBox = document.getElementById('manual-fields');
-        const presetId = document.getElementById('preset-id');
-        const unitPill = document.getElementById('unit-pill');
+    function setMode(mode, elementId) {
+        // Update the hidden input field for the backend
+        document.getElementById('selected_mode').value = mode;
 
-        if (isManual) {
-            manualBox.classList.remove('hidden');
-            unitPill.innerText = "Manual Entry";
-            presetId.value = "";
-        } else {
-            manualBox.classList.add('hidden');
-            unitPill.innerText = unit;
-            presetId.value = id;
-        }
+        // Reset all cards to default style
+        document.querySelectorAll('.mode-card').forEach(card => {
+            card.classList.remove('border-[#4ade80]', 'bg-[#111e26]', 'text-[#4ade80]', 'border-2');
+            card.classList.add('border-slate-600');
+        });
+
+        // Highlight the selected card in green
+        const activeCard = document.getElementById(elementId);
+        activeCard.classList.remove('border-slate-600');
+        activeCard.classList.add('border-2', 'border-[#4ade80]', 'bg-[#111e26]', 'text-[#4ade80]');
     }
 </script>
 {% endblock %}

@@ -1,22 +1,21 @@
-
-import datetime
 import datetime
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
-from .models import CarbonEntry, Category
-from .services.carbon_logic import calculate_metrics
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models.functions import TruncMonth
-from django.db.models import Sum
-from .models import CarbonEntry
-from django.shortcuts import render
-from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Sum
-from .forms import ExtendedRegisterForm
-from .utils import render_to_pdf # Import our helper
+from django.db.models.functions import TruncMonth
 
+from .models import CarbonEntry, Category, Profile
+from .forms import ExtendedRegisterForm
+from .utils import render_to_pdf
+@login_required
+def delete_entry(request, entry_id):
+    entry = get_object_or_404(CarbonEntry, id=entry_id, user=request.user)
+    if request.method == "POST":
+        entry.delete()
+    return redirect('dashboard')
 @login_required
 def export_pdf(request):
     user_entries = CarbonEntry.objects.filter(user=request.user).order_by('-created_at')
@@ -40,37 +39,37 @@ def export_pdf(request):
     return HttpResponse("Error generating PDF", status=400)
 @login_required
 def dashboard(request):
-    # 1. DATA ISOLATION: Get only this user's entries
+    # 1. Fetch user-specific entries
     user_entries = CarbonEntry.objects.filter(user=request.user).order_by('-created_at')
     user_total = user_entries.aggregate(Sum('co2_total'))['co2_total__sum'] or 0
     
-    # 2. TELEMETRY: Category Breakdown for the "Infrastructure Split" Chart
+    # 2. Chart Telemetry
     breakdown = user_entries.values('category__name').annotate(total=Sum('co2_total'))
     circle_labels = [item['category__name'] for item in breakdown]
     circle_values = [float(item['total']) for item in breakdown]
 
-    # 3. ENTERPRISE CONTEXT: Compare User vs Department
-    dept_code = request.user.profile.department
-    dept_name = request.user.profile.get_department_display()
-    
-    # Sum total impact of everyone in the same department
+    # 3. Departmental Context (Requires Profile)
+    try:
+        profile = request.user.profile
+        dept_code = profile.department
+        dept_name = profile.get_department_display()
+    except Profile.DoesNotExist:
+        dept_code, dept_name = 'ENG', 'Engineering'
+
     dept_total = CarbonEntry.objects.filter(
         user__profile__department=dept_code
     ).aggregate(Sum('co2_total'))['co2_total__sum'] or 0
 
-    # Calculate Personal Share safely (Avoid division by zero)
-    personal_share = 0
-    if dept_total > 0:
-        personal_share = (user_total / dept_total) * 100
+    personal_share = (user_total / dept_total * 100) if dept_total > 0 else 0
 
     context = {
         'metrics': {
-            'total': user_total,
-            'trees': user_total / 21,
+            'total': round(user_total, 2),
+            'trees': round(user_total / 21, 1),
             'dept_name': dept_name,
-            'dept_total': dept_total,
             'dept_code': dept_code,
-            'personal_share': personal_share, # Logic moved from template to here
+            'dept_total': round(dept_total, 2),
+            'personal_share': round(personal_share, 1),
         },
         'entries': user_entries[:10],
         'circle_labels': circle_labels,
@@ -96,17 +95,16 @@ def login_view(request):
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)  # This creates the session!
-            # Use 'next' if it exists, otherwise go to dashboard
-            next_url = request.GET.get('next', 'dashboard')
-            return redirect(next_url)
-        else:
-            # Print errors to terminal to see why it's failing
-            print(form.errors) 
+            login(request, user)
+            
+            # Use 'next' from the URL, or default to 'dashboard'
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect('dashboard') # Force redirect to dashboard name
     else:
         form = AuthenticationForm()
     return render(request, 'core/login.html', {'form': form})
-
 
 
 
@@ -131,36 +129,43 @@ def monthly_trends(request):
         'monthly_data': monthly_data
     })
 
+@login_required
 def log_activity(request):
     if request.method == "POST":
-        mode = request.POST.get('category_mode')
-        value = float(request.POST.get('value'))
+        # 1. Capture form values
+        commute_mode = request.POST.get('commute_mode', 'CAR') 
+        commute_dist = request.POST.get('commute_dist', '0')
+        hours_worked = request.POST.get('hours_worked', '0')
+        vcpu_hours = request.POST.get('vcpu_hours', '0')
 
-        if mode == 'manual':
-            # Create a brand new category on the fly
-            name = request.POST.get('custom_name')
-            unit = request.POST.get('custom_unit')
-            factor = float(request.POST.get('custom_factor'))
-            category, _ = Category.objects.get_or_create(
-                name=name, 
-                defaults={'unit': unit, 'co2_per_unit': factor}
-            )
-        else:
-            # Use the existing selection
-            category_id = request.POST.get('category_id')
-            category = Category.objects.get(id=category_id)
-            factor = category.co2_per_unit
+        # 2. Define log_data INSIDE the POST block
+        log_data = [
+            (commute_dist, commute_mode),          
+            (hours_worked, 'Office Energy'),      
+            (vcpu_hours, 'Cloud Infrastructure')  
+        ]
 
-        CarbonEntry.objects.create(
-            user=request.user,
-            category=category,
-            value=value,
-            co2_total=value * factor
-        )
+        # 3. Run the loop ONLY during a POST request
+        for value, cat_name in log_data:
+            try:
+                float_val = float(value) if value else 0
+                if float_val > 0:
+                    category = Category.objects.get(name__iexact=cat_name)
+                    CarbonEntry.objects.create(
+                        user=request.user,
+                        category=category,
+                        value=float_val
+                    )
+                    print(f"DEBUG: Saved {float_val} for {cat_name}")
+            except (Category.DoesNotExist, ValueError):
+                print(f"DEBUG: Skipping {cat_name} - check Admin categories.")
+        
         return redirect('dashboard')
 
-    categories = Category.objects.all()
-    return render(request, 'core/log_activity.html', {'categories': categories})
+    # This part handles the GET request (just showing the page)
+    return render(request, 'core/log_activity.html')
+
+@login_required
 def history(request):
     entries = CarbonEntry.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'core/history.html', {'entries': entries})

@@ -13,4 +13,6 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('export-pdf/', views.export_pdf, name='export_pdf'),
+    path('delete-entry/<int:entry_id>/', views.delete_entry, name='delete_entry'),
+
 ]
